@@ -18,7 +18,7 @@ const siteConfig = {
     messageObserverTarget: ".chat-container", // Element to observe for new messages
     themeColorSelector: () => {
       // Extract theme color from ChatGPT's UI
-      const navbar = document.querySelector('nav');
+      const navbar = document.querySelector('nav'); 
       if (navbar) {
         return window.getComputedStyle(navbar).backgroundColor;
       }

@@ -1,4 +1,3 @@
-// .trae
 {
   "projectName": "AI Chat Bookmark Chrome Extension",
   "description": "A Chrome extension that automatically tracks message elements in AI chat platforms by background color and provides easy navigation through a side panel",

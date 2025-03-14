@@ -22,20 +22,24 @@ const activeChats = new Map();
 
 // Listen for tab updates to show side panel when on supported sites
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete') {
-    const url = new URL(tab.url);
-    const hostname = url.hostname;
-    
-    // Check if current site is supported (ChatGPT or Gemini)
-    if (hostname === 'chat.openai.com' || hostname === 'gemini.google.com') {
-      console.log(`Supported AI chat site detected: ${hostname}`);
+  if (changeInfo.status === 'complete' && tab.url) {
+    try {
+      const url = new URL(tab.url);
+      const hostname = url.hostname;
       
-      // Enable side panel for this tab
-      chrome.sidePanel.setOptions({
-        tabId,
-        path: 'src/ui/side_panel.html',
-        enabled: true
-      });
+      // Check if current site is supported (ChatGPT or Gemini)
+      if (hostname === 'chat.openai.com' || hostname === 'gemini.google.com') {
+        console.log(`Supported AI chat site detected: ${hostname}`);
+        
+        // Enable side panel for this tab
+        chrome.sidePanel.setOptions({
+          tabId,
+          path: 'src/ui/side_panel.html',
+          enabled: true
+        });
+      }
+    } catch (e) {
+      console.error('Error processing tab URL:', e);
     }
   }
 });
@@ -80,21 +84,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep the message channel open for async response
   }
   
-  // Handle scroll to message request from side panel
-  if (message.action === 'scrollToMessage') {
-    const { tabId, messageId } = message;
+  // Get active chat for a tab
+  if (message.action === 'getActiveChat') {
+    const { tabId } = message;
+    const chatId = activeChats.get(tabId);
     
-    chrome.tabs.sendMessage(tabId, {
-      action: 'scrollToMessage',
-      messageId
-    }, (response) => {
-      sendResponse(response);
-    });
-    
-    return true; // Keep the message channel open for async response
+    sendResponse({ chatId });
+    return false;
   }
   
-  // Get all chats for side panel
+  // Handle other message types...
+  // Get all chats
   if (message.action === 'getAllChats') {
     chrome.storage.local.get(['chats'], (result) => {
       sendResponse({ chats: result.chats || {} });
@@ -117,78 +117,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep the message channel open for async response
   }
   
-  // Delete a chat
-  if (message.action === 'deleteChat') {
-    const { chatId } = message;
+  // Handle scroll to message request from side panel
+  if (message.action === 'scrollToMessage') {
+    const { tabId, messageId } = message;
     
-    chrome.storage.local.get(['chats'], (result) => {
-      const chats = result.chats || {};
-      
-      if (chats[chatId]) {
-        delete chats[chatId];
-        
-        chrome.storage.local.set({ chats }, () => {
-          console.log('Chat deleted:', chatId);
-          sendResponse({ success: true });
-        });
-      } else {
-        sendResponse({ success: false, error: 'Chat not found' });
-      }
-    });
-    
-    return true; // Keep the message channel open for async response
-  }
-  
-  // Legacy bookmark support
-  if (message.action === 'saveBookmark') {
-    // Save bookmark to storage
-    chrome.storage.local.get('bookmarks', (result) => {
-      const bookmarks = result.bookmarks || [];
-      
-      // Check if bookmark already exists
-      const existingIndex = bookmarks.findIndex(b => b.chatId === message.data.chatId);
-      
-      if (existingIndex >= 0) {
-        // Update existing bookmark
-        bookmarks[existingIndex] = message.data;
-      } else {
-        // Add new bookmark
-        bookmarks.push(message.data);
-      }
-      
-      chrome.storage.local.set({ bookmarks }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Error saving bookmark:', chrome.runtime.lastError);
-          sendResponse({ success: false, error: chrome.runtime.lastError.message });
-        } else {
-          console.log('Bookmark saved:', message.data);
-          sendResponse({ success: true });
-        }
-      });
-    });
-    
-    return true; // Keep the message channel open for async response
-  }
-  
-  if (message.action === 'getBookmarks') {
-    // Retrieve all bookmarks
-    chrome.storage.local.get('bookmarks', (result) => {
-      sendResponse({ bookmarks: result.bookmarks || [] });
-    });
-    
-    return true; // Keep the message channel open for async response
-  }
-  
-  if (message.action === 'deleteBookmark') {
-    // Delete a bookmark
-    chrome.storage.local.get('bookmarks', (result) => {
-      const bookmarks = result.bookmarks || [];
-      const newBookmarks = bookmarks.filter(b => b.chatId !== message.chatId);
-      
-      chrome.storage.local.set({ bookmarks: newBookmarks }, () => {
-        console.log('Bookmark deleted:', message.chatId);
-        sendResponse({ success: true });
-      });
+    chrome.tabs.sendMessage(tabId, {
+      action: 'scrollToMessage',
+      messageId
+    }, (response) => {
+      sendResponse(response);
     });
     
     return true; // Keep the message channel open for async response
