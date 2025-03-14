@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Navigator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AI Chat Navigator</h1>
+    
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="messages">Messages</button>
+      <button class="tab-btn" data-tab="chats">Chats</button>
+    </div>
+    
+    <div class="tab-content active" id="messages-tab">
+      <div class="filter-controls">
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="user">User</button>
+          <button class="filter-btn" data-filter="assistant">Assistant</button>
+        </div>
+        <input type="text" class="search-box" id="message-search" placeholder="Search messages...">
+      </div>
+      
+      <div id="messages-container">
+        <div class="empty-state">
+          No messages tracked yet. Visit a supported AI chat page.
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="chats-tab">
+      <input type="text" class="search-box" id="chat-search" placeholder="Search chats...">
+      
+      <div id="chats-container">
+        <div class="empty-state">
+          No chats tracked yet. Visit a supported AI chat page.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="side_panel.js" type="module"></script>
+</body>
+</html>
